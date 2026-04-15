@@ -1,0 +1,52 @@
+# Stage 1: Build dependencies
+FROM python:3.11-slim AS builder
+
+WORKDIR /app
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements and install
+COPY requirements.txt .
+RUN pip wheel --no-cache-dir --wheel-dir /wheels -r requirements.txt
+
+# Copy application source
+#COPY . .
+
+# Stage 2: Final image
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Create a non-root user and group
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+
+# Copy installed dependencies and app from builder
+COPY --from=builder /wheels /wheels
+COPY requirements.txt .
+RUN pip install --no-cache-dir --no-index --find-links=/wheels -r requirements.txt
+
+COPY . .
+
+#ENV PATH=/root/.local/bin:$PATH
+ENV PYTHONUNBUFFERED=1
+ENV APP_ENV=production
+
+# Expose port (if your app listens on a port, e.g., 8080)
+EXPOSE 8080
+
+# Create volumes for persistent data and logs
+VOLUME ["/app/data", "/app/logs"]
+
+# Healthcheck (adjust the command to your app's health endpoint or process)
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD pgrep -f "python" || exit 1
+
+# Switch to non-root user
+USER appuser
+
+# Default command (adjust as needed)
+CMD ["python", "app.py"]

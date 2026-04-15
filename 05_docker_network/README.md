@@ -61,38 +61,12 @@ Create a custom network and run containers on it:
 ```bash
 docker network create my_app_net
 
-docker run -d --name my_nginx --network my_app_net nginx
-docker run -it --name my_alpine --network my_app_net alpine sh
+docker run -d --name my_nginx --network my_app_net nginx:stable-alpine3.23-slim
+docker run -it --name my_alpine --network my_app_net postgres:9.3.21-alpine sh
 ```
 
 Inside the my_alpine container, you can ping my_nginx by name:
-ping my_nginx
+``` ping my_nginx ```
 
-### Example2: Connecting Web and Database Containers with Docker Networks
-
-This example demonstrates how to connect a web server container to a database container using a user-defined Docker bridge network. This approach allows containers to communicate securely and reliably using container names as hostnames.
-
----
-
-##### Step 1: Create a User-Defined Network
-
-Create a custom bridge network for your application:
-
-```bash
-docker network create myapp-network
-```
-##### Step 2: Run the Database Container
-Start a MySQL database container and attach it to the custom network:
-```bash
-docker run -d --name mydb --network myapp-network \
-  -e MYSQL_ROOT_PASSWORD=secret mysql:8
-```
-How It Works
-- Both containers are attached to the myapp-network network.
-- The web server can connect to the database using the hostname mydb (the name of the database container).
-- This setup enables seamless service discovery and communication between containers without exposing internal ports to the host.
-Now, you can access your web application at http://localhost:8080. 
-
-
-
-
+### Example2: Establishing Connectivity Between Web Server and Database.
+Please follow the ending part of the video for all steps in detail wherein I had illustrated the example#2.
