@@ -1,0 +1,58 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: demo
+      POSTGRES_USER: demo
+      POSTGRES_PASSWORD: demo
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - appnet
+
+  backend:
+    build: ./backend
+    depends_on:
+      - db
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/demo
+      SPRING_DATASOURCE_USERNAME: demo
+      SPRING_DATASOURCE_PASSWORD: demo
+    networks:
+      - appnet
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "8088:80"
+    depends_on:
+      - backend
+    networks:
+      - appnet
+
+  trivy-backend:
+    image: aquasec/trivy:latest
+    command: image --exit-code 0 --no-progress --format table --output /report/backend_trivy_report.txt 3_tier_app-backend
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /Users/muslekri/testing_dir/report:/report
+    depends_on:
+      - backend
+    restart: "no"
+
+  trivy-frontend:
+    image: aquasec/trivy:latest
+    command: image --exit-code 0 --no-progress --format table --output /report/frontend_trivy_report.txt 3_tier_app-frontend
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /Users/muslekri/testing_dir/report:/report
+    depends_on:
+      - frontend
+    restart: "no"
+
+volumes:
+  db_data:
+
+networks:
+  appnet:
